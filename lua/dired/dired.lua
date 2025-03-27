@@ -10,6 +10,8 @@ local clipboard = require("dired.clipboard")
 
 local M = {}
 
+M.last_position = nil
+
 -- initialize dired buffer
 function M.init_dired()
     -- preserve altbuffer
@@ -58,6 +60,10 @@ function M.open_dir(path)
     history.push_path(vim.g.current_dired_path)
     vim.cmd(string.format("%s noautocmd edit %s", keep_alt, vim.fn.fnameescape(path)))
     M.init_dired()
+
+    if M.last_position ~= nil then
+        vim.api.nvim_win_set_cursor(0, M.last_position)
+    end
 end
 
 -- open a file or traverse inside a directory
@@ -79,6 +85,8 @@ function M.enter_dir()
         vim.api.nvim_err_writeln(string.format("Dired: invalid filename (%s) for file.", filename))
         return
     end
+
+    M.last_position = vim.api.nvim_win_get_cursor(0)
 
     if file.filetype == "directory" then
         vim.cmd(string.format("keepalt noautocmd edit %s", vim.fn.fnameescape(file.filepath)))
@@ -151,6 +159,7 @@ function M.quit_buf()
     if cur_buf == nil or cur_buf.flag ~= "#" then
         return
     end
+    M.last_position = vim.api.nvim_win_get_cursor(0)
     vim.api.nvim_set_current_buf(cur_buf.bufnr)
 end
 
