@@ -10,7 +10,8 @@ local clipboard = require("dired.clipboard")
 
 local M = {}
 
-M.last_position = nil
+---@type table<string, integer[]>
+M.last_position = {}
 
 -- initialize dired buffer
 function M.init_dired()
@@ -61,8 +62,8 @@ function M.open_dir(path)
     vim.cmd(string.format("%s noautocmd edit %s", keep_alt, vim.fn.fnameescape(path)))
     M.init_dired()
 
-    if M.last_position ~= nil then
-        vim.api.nvim_win_set_cursor(0, M.last_position)
+    if M.last_position[vim.g.current_dired_path] ~= nil then
+        vim.api.nvim_win_set_cursor(0, M.last_position[vim.g.current_dired_path])
     end
 end
 
@@ -86,17 +87,19 @@ function M.enter_dir()
         return
     end
 
-    M.last_position = vim.api.nvim_win_get_cursor(0)
-
     if file.filetype == "directory" then
         vim.cmd(string.format("keepalt noautocmd edit %s", vim.fn.fnameescape(file.filepath)))
     else
+        M.last_position[vim.g.current_dired_path] = vim.api.nvim_win_get_cursor(0)
         vim.cmd(string.format("keepalt edit %s", vim.fn.fnameescape(file.filepath)))
     end
 
     if file.filetype == "directory" then
         history.push_path(vim.g.current_dired_path)
         M.init_dired()
+        if M.last_position[file.filepath] ~= nil then
+            vim.api.nvim_win_set_cursor(0, M.last_position[file.filepath])
+        end
     end
 
     -- if file is a directory then enter inside the directory
@@ -159,13 +162,14 @@ function M.quit_buf()
     if cur_buf == nil or cur_buf.flag ~= "#" then
         return
     end
-    M.last_position = vim.api.nvim_win_get_cursor(0)
+    M.last_position[vim.g.current_dired_path] = vim.api.nvim_win_get_cursor(0)
     vim.api.nvim_set_current_buf(cur_buf.bufnr)
 end
 
 function M.go_back()
     local current_path = vim.g.current_dired_path
     display.goto_filename = fs.get_filename(current_path)
+    M.last_position[vim.g.current_dired_path] = vim.api.nvim_win_get_cursor(0)
     M.open_dir(fs.get_parent_path(current_path))
 end
 
