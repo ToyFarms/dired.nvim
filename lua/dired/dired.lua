@@ -87,10 +87,11 @@ function M.enter_dir()
         return
     end
 
+    M.last_position[vim.g.current_dired_path] = vim.api.nvim_win_get_cursor(0)
+
     if file.filetype == "directory" then
         vim.cmd(string.format("keepalt noautocmd edit %s", vim.fn.fnameescape(file.filepath)))
     else
-        M.last_position[vim.g.current_dired_path] = vim.api.nvim_win_get_cursor(0)
         vim.cmd(string.format("keepalt edit %s", vim.fn.fnameescape(file.filepath)))
     end
 
