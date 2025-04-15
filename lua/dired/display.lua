@@ -135,6 +135,21 @@ function M.get_directory_listing(directory)
         end
     end
 
+    -- TODO: add config for this
+    local dirs = {}
+    local files = {}
+
+    for _, entry in ipairs(listing) do
+        local type = entry.component.fs_t.stat.type
+        if type == "directory" then
+            table.insert(dirs, entry)
+        else
+            table.insert(files, entry)
+        end
+    end
+
+    listing = utils.concatenate_tables({ unpack(dirs) }, files)
+
     buffer_listing = utils.concatenate_tables(buffer_listing, listing)
     return buffer_listing
 end
