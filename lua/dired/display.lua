@@ -6,6 +6,7 @@ local nui_line = require("nui.line")
 local nui_text = require("nui.text")
 local utils = require("dired.utils")
 local colors = require("dired.colors")
+local event = require("dired.event")
 local M = {}
 
 -- fill the buffer with directory contents
@@ -24,6 +25,7 @@ function M.render(path)
     M.clear()
     M.display_dired_listing(path)
     M.flush_buffer()
+    event.dispatch()
     vim.bo.modifiable = false
 end
 

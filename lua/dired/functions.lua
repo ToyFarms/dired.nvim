@@ -1,6 +1,7 @@
 local fs = require("dired.fs")
 local config = require("dired.config")
 local display = require("dired.display")
+local event = require("dired.event")
 
 local M = {}
 
@@ -16,6 +17,9 @@ function M.rename_file(fs_t)
     end
     local old_path = fs_t.filepath
     local new_path = fs.join_paths(fs_t.parent_dir, new_name)
+
+    event.fire(event.Type.RENAME, { from = old_path, to = new_path })
+
     local success = vim.loop.fs_rename(old_path, new_path)
     if not success then
         vim.notify(
@@ -34,19 +38,25 @@ function M.create_file()
     local default_dir_mode = tonumber("775", 8)
     local default_file_mode = tonumber("644", 8)
 
+    local dir = vim.g.current_dired_path
+    local path = fs.join_paths(dir, filename)
+
     if filename:sub(-1, -1) == M.path_separator then
         -- create a directory
         filename = filename:sub(1, -2)
-        local dir = vim.g.current_dired_path
-        local fd = vim.loop.fs_mkdir(fs.join_paths(dir, filename), default_dir_mode)
+
+        event.fire(event.Type.CREATE, { path = path, type = "directory" })
+
+        local fd = vim.loop.fs_mkdir(path, default_dir_mode)
 
         if not fd then
             vim.notify(string.format(' DiredCreate: Could not create Directory "%s".', filename))
             return
         end
     else
-        local dir = vim.g.current_dired_path
-        local fd, err = vim.loop.fs_open(fs.join_paths(dir, filename), "w+", default_file_mode)
+        event.fire(event.Type.CREATE, { path = path, type = "file" })
+
+        local fd, err = vim.loop.fs_open(path, "w+", default_file_mode)
 
         if not fd or err ~= nil then
             vim.notify(string.format(' DiredCreate: Could not create file "%s".', filename))
@@ -67,6 +77,7 @@ function M.delete_file(fs_t, ask)
         if fs_t.filetype == "directory" then
             fs.do_delete(fs_t.filepath)
         else
+            event.fire(event.Type.DELETE, { path = fs_t.filepath, type = "file" })
             vim.loop.fs_unlink(fs_t.filepath)
         end
         return
@@ -81,6 +92,7 @@ function M.delete_file(fs_t, ask)
         if fs_t.filetype == "directory" then
             fs.do_delete(fs_t.filepath)
         else
+            event.fire(event.Type.DELETE, { path = fs_t.filepath, type = "file" })
             vim.loop.fs_unlink(fs_t.filepath)
         end
     end

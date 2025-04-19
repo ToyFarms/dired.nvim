@@ -2,6 +2,7 @@
 -- Author: X3eRo0
 local config = require("dired.config")
 local dired = require("dired.dired")
+local event = require("dired.event")
 
 local M = {}
 
@@ -27,6 +28,7 @@ M.toggle_sort_order = dired.toggle_sort_order
 M.toggle_show_icons = dired.toggle_show_icons
 M.toggle_colors = dired.toggle_colors
 M.toggle_hide_details = dired.toggle_hide_details
+M.event = event
 
 function M.setup(opts)
     -- apply user config

@@ -7,6 +7,7 @@ local utils = require("dired.utils")
 local marker = require("dired.marker")
 local history = require("dired.history")
 local clipboard = require("dired.clipboard")
+local event = require("dired.event")
 
 local M = {}
 
@@ -77,7 +78,9 @@ function M.enter_dir()
     display.cursor_pos = {} -- reset cursor pos
     local filename = display.get_filename_from_listing(vim.api.nvim_get_current_line())
     if filename == nil then
-        vim.api.nvim_err_writeln("Dired: Invalid operation make sure cursor is placed on a file/directory.")
+        vim.api.nvim_err_writeln(
+            "Dired: Invalid operation make sure cursor is placed on a file/directory."
+        )
         return
     end
     local dir_files = ls.fs_entry.get_directory(dir)
@@ -92,6 +95,8 @@ function M.enter_dir()
     if file.filetype == "directory" then
         vim.cmd(string.format("keepalt noautocmd edit %s", vim.fn.fnameescape(file.filepath)))
     else
+        event.fire(event.Type.FILE_ENTER, { file = file.filepath })
+        event.dispatch()
         vim.cmd(string.format("keepalt edit %s", vim.fn.fnameescape(file.filepath)))
     end
 
@@ -127,7 +132,8 @@ function M.buffer_state(opts)
     local buffers = {}
     local default_selection_idx = 1
     for _, bufnr in ipairs(bufnrs) do
-        local flag = bufnr == vim.fn.bufnr("") and "%" or (bufnr == vim.fn.bufnr("#") and "#" or " ")
+        local flag = bufnr == vim.fn.bufnr("") and "%"
+            or (bufnr == vim.fn.bufnr("#") and "#" or " ")
 
         if opts.sort_lastused and not opts.ignore_current_buffer and flag == "#" then
             default_selection_idx = 2
@@ -223,7 +229,9 @@ function M.rename_file()
     dir = vim.g.current_dired_path
     local filename = display.get_filename_from_listing(vim.api.nvim_get_current_line())
     if filename == nil then
-        vim.api.nvim_err_writeln("Dired: Invalid operation make sure cursor is placed on a file/directory.")
+        vim.api.nvim_err_writeln(
+            "Dired: Invalid operation make sure cursor is placed on a file/directory."
+        )
         return
     end
     local dir_files = ls.fs_entry.get_directory(dir)
@@ -244,7 +252,9 @@ function M.delete_file()
     dir = vim.g.current_dired_path
     local filename = display.get_filename_from_listing(vim.api.nvim_get_current_line())
     if filename == nil then
-        vim.api.nvim_err_writeln("Dired: Invalid operation make sure the cursor is placed on a file/directory.")
+        vim.api.nvim_err_writeln(
+            "Dired: Invalid operation make sure the cursor is placed on a file/directory."
+        )
         return
     end
     local dir_files = ls.fs_entry.get_directory(dir)
@@ -308,7 +318,9 @@ function M.mark_file()
     dir = vim.g.current_dired_path
     local filename = display.get_filename_from_listing(vim.api.nvim_get_current_line())
     if filename == nil then
-        vim.api.nvim_err_writeln("Dired: Invalid operation make sure the cursor is placed on a file/directory.")
+        vim.api.nvim_err_writeln(
+            "Dired: Invalid operation make sure the cursor is placed on a file/directory."
+        )
         return
     end
     local dir_files = ls.fs_entry.get_directory(dir)
@@ -363,7 +375,8 @@ function M.delete_marked()
             return
         end
         if
-            fs.get_absolute_path(fs.get_parent_path(fs_t.filepath)) ~= fs.get_absolute_path(vim.g.current_dired_path)
+            fs.get_absolute_path(fs.get_parent_path(fs_t.filepath))
+            ~= fs.get_absolute_path(vim.g.current_dired_path)
         then
             files_out_of_cwd = true
             print(string.format('   {%.2d: "%s"} (file not in cwd)', i, fs_t.filename))
@@ -372,7 +385,9 @@ function M.delete_marked()
         end
     end
     if files_out_of_cwd then
-        print("[!] WARNING: You have files marked that are outside of your current working directory.")
+        print(
+            "[!] WARNING: You have files marked that are outside of your current working directory."
+        )
     end
     local prompt = vim.fn.input("Confirm deletion {yes,n(o),q(uit)}: ", "yes", "file")
     prompt = string.lower(prompt)
@@ -393,7 +408,9 @@ function M.clip_file(action)
     dir = vim.g.current_dired_path
     local filename = display.get_filename_from_listing(vim.api.nvim_get_current_line())
     if filename == nil then
-        vim.api.nvim_err_writeln("Dired: Invalid operation make sure the cursor is placed on a file/directory.")
+        vim.api.nvim_err_writeln(
+            "Dired: Invalid operation make sure the cursor is placed on a file/directory."
+        )
         return
     end
     local dir_files = ls.fs_entry.get_directory(dir)

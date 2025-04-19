@@ -1,5 +1,6 @@
 -- functions for fetching files and directories information
 local config = require("dired.config")
+local event = require("dired.event")
 
 local M = {}
 
@@ -126,9 +127,12 @@ function M.do_delete(path)
             if not success then
                 return false
             end
+
+            event.fire(event.Type.DELETE, { path = new_cwd, type = "file" })
         end
     end
 
+    event.fire(event.Type.DELETE, { path = path, type = "directory" })
     return vim.loop.fs_rmdir(path)
 end
 
@@ -153,6 +157,7 @@ function M.do_copy(source, destination)
             vim.api.nvim_err_writeln("do_copy fs_copyfile failed '%s'", errmsg)
             return false, errmsg
         end
+        event.fire(event.Type.CREATE, { path = destination, type = "file" })
         return true
     elseif source_stats.type == "directory" then
         handle, errmsg = vim.loop.fs_scandir(source)
@@ -170,6 +175,7 @@ function M.do_copy(source, destination)
             -- vim.api.nvim_err_writeln(string.format("do_copy fs_mkdir '%s' failed '%s'", destination, errmsg))
             -- return false, errmsg
         end
+        event.fire(event.Type.CREATE, { path = destination, type = "directory" })
 
         while true do
             local name, _ = vim.loop.fs_scandir_next(handle)
