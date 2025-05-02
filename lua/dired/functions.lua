@@ -18,6 +18,42 @@ function M.rename_file(fs_t)
     local old_path = fs_t.filepath
     local new_path = fs.join_paths(fs_t.parent_dir, new_name)
 
+    local type = "file"
+    if fs_t.filetype == "directory" then
+        type = "directory"
+    end
+
+    if new_name:sub(-1, -1) == M.path_separator and fs_t.filetype ~= "directory" then
+        if fs_t.size ~= 0 then
+            local prompt = vim.fn.input(
+                string.format(
+                    "%s is not empty, convert (deletes content)? {y(es),no,q(uit)}: ",
+                    fs_t.filename
+                ),
+                "",
+                "file"
+            )
+            prompt = string.lower(prompt)
+            if string.sub(prompt, 1, 3) == "yes" or string.sub(prompt, 1, 1) == "y" then
+                event.fire(event.Type.DELETE, { path = fs_t.filepath, type = "file" })
+                vim.uv.fs_unlink(fs_t.filepath)
+            end
+        else
+            event.fire(event.Type.DELETE, { path = fs_t.filepath, type = "file" })
+            vim.uv.fs_unlink(fs_t.filepath)
+        end
+        event.fire(event.Type.CREATE, { path = new_path, type = "directory" })
+        vim.loop.fs_mkdir(new_path, tonumber("775", 8))
+        display.goto_filename = new_name:sub(1, -2)
+        return
+    end
+
+    if old_path == new_path then
+        vim.notify("... Nothing changed")
+        display.goto_filename = fs_t.filename
+        return
+    end
+
     local success = vim.loop.fs_rename(old_path, new_path)
     if not success then
         vim.notify(
@@ -26,17 +62,16 @@ function M.rename_file(fs_t)
         return
     end
 
-    local type = "file"
-    if fs_t.filetype == "directory" then
-        type = "directory"
-    end
     event.fire(event.Type.RENAME, { from = old_path, to = new_path, type = type })
 
     display.goto_filename = new_name
 end
 
-function M.create_file()
-    local filename = vim.fn.input("Enter Filename: ")
+function M.create_file(_filename)
+    local filename = _filename
+    if _filename == nil then
+        filename = vim.fn.input("Enter Filename: ")
+    end
     if filename == "" then
         return
     end
