@@ -417,7 +417,7 @@ function M.clip_file(action)
     local file = ls.get_file_by_filename(dir_files, filename)
     display.cursor_pos = vim.api.nvim_win_get_cursor(0)
     display.goto_filename = filename
-    clipboard.add_file(file, action)
+    clipboard.toggle_file(file, action)
     display.render(vim.g.current_dired_path)
     -- vim.notify(string.format("\"%s\" marked.", file.filename))
 end
@@ -448,7 +448,7 @@ function M.clip_file_range(action)
         local dir_files = ls.fs_entry.get_directory(dir)
         local file = ls.get_file_by_filename(dir_files, filename)
         -- print(filename, file)
-        clipboard.add_file(file, action)
+        clipboard.toggle_file(file, action)
     end
     display.cursor_pos = vim.api.nvim_win_get_cursor(0)
     display.goto_filename = files[1]

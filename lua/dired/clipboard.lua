@@ -34,9 +34,26 @@ end
 
 function M.remove_file(fs_t)
     for i, e in ipairs(M.clipboard) do
-        if e.fs_t == fs_t then
+        if e.fs_t.filename == fs_t.filename then
             table.remove(M.clipboard, i)
         end
+    end
+end
+
+local function file_is_marked(fs_t, action)
+    for i, e in ipairs(M.clipboard) do
+        if e.fs_t.filename == fs_t.filename and e.action == action then
+            return true
+        end
+    end
+    return false
+end
+
+function M.toggle_file(fs_t, action)
+    if file_is_marked(fs_t, action) then
+        M.remove_file(fs_t)
+    else
+        M.add_file(fs_t, action)
     end
 end
 
