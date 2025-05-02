@@ -4,11 +4,14 @@ local M = {}
 M.uid_cache = {}
 M.gid_cache = {}
 
-function M.get_visual_selection()
+function M.get_visual_selection(whole_lines)
     local s_start = vim.fn.getpos("'<")
     local s_end = vim.fn.getpos("'>")
     local n_lines = math.abs(s_end[2] - s_start[2]) + 1
     local lines = vim.api.nvim_buf_get_lines(0, s_start[2] - 1, s_end[2], false)
+    if whole_lines then
+        return lines
+    end
     lines[1] = string.sub(lines[1], s_start[3], -1)
     if n_lines == 1 then
         lines[n_lines] = string.sub(lines[n_lines], 1, s_end[3] - s_start[3] + 1)
@@ -115,10 +118,13 @@ function M.getgroupname(gid)
     local groupname = "<NULL>"
 
     if sysname == "Darwin" then
-        groupname = vim.fn.system(string.format("dscl . -list /Groups PrimaryGroupID | awk '$2 == %d {print $1}'", gid))
+        groupname = vim.fn.system(
+            string.format("dscl . -list /Groups PrimaryGroupID | awk '$2 == %d {print $1}'", gid)
+        )
     else
-        groupname =
-            vim.fn.system(string.format("cat /etc/group | grep :%d:| head -n 1 | awk -F ':' '{ print $1}'", gid))
+        groupname = vim.fn.system(
+            string.format("cat /etc/group | grep :%d:| head -n 1 | awk -F ':' '{ print $1}'", gid)
+        )
     end
 
     if not groupname then
@@ -253,7 +259,9 @@ end
 
 function M.tableLength(table)
     local count = 0
-    for _ in pairs(table) do count = count + 1 end
+    for _ in pairs(table) do
+        count = count + 1
+    end
     return count
 end
 

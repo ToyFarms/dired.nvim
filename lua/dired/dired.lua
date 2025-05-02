@@ -424,7 +424,13 @@ end
 
 function M.clip_file_range(action)
     local dir = vim.g.current_dired_path
-    local lines = utils.get_visual_selection()
+    local lines = utils.get_visual_selection(true)
+    if #lines == 1 then
+        vim.fn.setreg("+", lines[1])
+        vim.fn.setreg('"', lines[1])
+        return
+    else
+    end
     local files = {}
     for _, line in ipairs(lines) do
         local filename = display.get_filename_from_listing(line)

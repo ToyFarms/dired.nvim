@@ -18,8 +18,6 @@ function M.rename_file(fs_t)
     local old_path = fs_t.filepath
     local new_path = fs.join_paths(fs_t.parent_dir, new_name)
 
-    event.fire(event.Type.RENAME, { from = old_path, to = new_path })
-
     local success = vim.loop.fs_rename(old_path, new_path)
     if not success then
         vim.notify(
@@ -27,6 +25,13 @@ function M.rename_file(fs_t)
         )
         return
     end
+
+    local type = "file"
+    if fs_t.filetype == "directory" then
+        type = "directory"
+    end
+    event.fire(event.Type.RENAME, { from = old_path, to = new_path, type = type })
+
     display.goto_filename = new_name
 end
 

@@ -11,7 +11,7 @@ M.Type = {
 ---@class Event
 ---@field type EventType
 ---@field data table
----@field handler_id? integer
+---@field handler_id integer?
 
 ---@class EventHandler
 ---@field handler fun(event: Event)
